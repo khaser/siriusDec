@@ -43,8 +43,7 @@
         // - templates/j_treedoc.js (пятый шаг)
         var trash = "q€w®€™¥®¥™¥iuoihg§°£z×↓b©↓−«h»………»“i∞o→←∞&↑‰$³²²";
         var localDoc = public_newDocument();
-        //var ws = new WebSocket("ws://" + document.domain + ":" + location.port + "/ws");
-	var ws = new WebSocket("ws://104.248.26.149:5000/ws");
+        var ws = new WebSocket("ws://" + document.domain + ":" + location.port + "/ws");
         $("#integration-textarea").on("input", function() {
             var newContent = $("#integration-textarea").val();
             updateLocalDocument(newContent, localDoc);
