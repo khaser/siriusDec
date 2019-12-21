@@ -31,10 +31,22 @@
 //   2. Для ассоциативной структуры с произвольным ключами можно использовать Map.
 //      https://developer.mozilla.org/ru/docs/Web/JavaScript/Reference/Global_Objects/Map
 
-function editList(left, right) {
+function editList(fullLeft, fullRight) {
     var inf = 10 ** 9;
-    var n = left.length, m = right.length;
 
+    var startPos = 0;
+    var endPos = 0;
+
+    for (let i = 0; i < Math.min(fullLeft.length, fullRight.length) && fullLeft[i] === fullRight[i]; ++i)
+        startPos++;
+
+    for (let i = 0; Math.min(fullLeft.length, fullRight.length) - i > startPos &&
+    fullLeft[fullLeft.length - i - 1] === fullRight[fullRight.length - i - 1]; ++i)
+        endPos++;
+
+    var left = fullLeft.substring(startPos, fullLeft.length - endPos);
+    var right = fullRight.substring(startPos, fullRight.length - endPos);
+    var n = left.length, m = right.length;
     var dp = [];
     var res = [];
     for (let i = 0; i <= n; ++i) {
@@ -53,19 +65,19 @@ function editList(left, right) {
             if (i != 0) {
                 if (dp[i][j] > dp[i - 1][j] + 1) {
                     dp[i][j] = Math.min(dp[i][j], dp[i - 1][j] + 1);
-                    res[i][j] = [[i - 1, j], ['D', i - 1]];
+                    res[i][j] = [[i - 1, j], ['D', i - 1 + startPos]];
                 }
             }
             if (j != 0) {
                 if (dp[i][j] > dp[i][j - 1] + 1) {
                     dp[i][j] = Math.min(dp[i][j], dp[i][j - 1] + 1);
-                    res[i][j] = [[i, j - 1], ['I', j - 2, right[j - 1]]];
+                    res[i][j] = [[i, j - 1], ['I', j - 2 + startPos, right[j - 1]]];
                 }
             }
             if (j != 0 && i != 0) {
                 if (dp[i][j] > dp[i - 1][j - 1] + 1) {
                     dp[i][j] = Math.min(dp[i][j], dp[i - 1][j - 1] + 1);
-                    res[i][j] = [[i - 1, j - 1], ['X', j - 1, right[i - 1]]];
+                    res[i][j] = [[i - 1, j - 1], ['X', j - 1 + startPos, right[i - 1]]];
                 }
                 if (left[i - 1] == right[j - 1]) {
                     if (dp[i][j] > dp[i - 1][j - 1]) {
