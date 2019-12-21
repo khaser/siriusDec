@@ -50,6 +50,12 @@
             ws.send(public_serializeState(localDoc));
         });
         ws.onmessage = function (event) {
+            var startIndex = $("#integration-textarea").prop("selectionStart");
+            var startPosition = localDoc.ind_to_pos[startIndex].slice();
+
+            var endIndex = $("#integration-textarea").prop("selectionEnd");
+            var endPosition = localDoc.ind_to_pos[endIndex].slice();
+
             var data = event.data;
             if (data === trash) {
                 if (public_getContent(localDoc) !== "") {
@@ -59,11 +65,14 @@
                 public_mergeStateWith(localDoc, data);
                 $("#integration-textarea").val(public_getContent(localDoc));
             }
+            // далее код синхронизации
+            startIndex = _getIndexByPosition(localDoc, startPosition);
+            endIndex = _getIndexByPosition(localDoc, endPosition);
+            $("#integration-textarea").get()[0].setSelectionRange(startIndex, endIndex);
         };
-
         ws.onopen = function () {
             ws.send(trash);
-        }
+        };
 
         //------------------------------------------------
         // !!!!! vvvvv vvvvv vvvvv vvvvv vvvvv vvvvv vvvvv
@@ -96,3 +105,4 @@
         </script>
   </body>
 </html>
+

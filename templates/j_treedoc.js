@@ -32,17 +32,15 @@
 function public_newDocument() {
     return {
         D1: new Map([[JSON.stringify([0]), "begin"], [JSON.stringify([100]), "end"]]),
-        D2: new Set()
+        D2: new Set(),
+        ind_to_pos: [[0], [100]]
     };
 }
 
-var ind_to_pos;
 function updateLocalDocument(newContent, localDocument) {
     var docContent = public_getContent(localDocument);
     var changes = editList(docContent, newContent);
-    ind_to_pos = _getPositionByIndex(localDocument).slice();
-    console.log(changes);
-    console.log(ind_to_pos);
+    localDocument.ind_to_pos = _getPositionByIndex(localDocument).slice();
     for (let i of changes) {
         switch (i[0]) {
             case "X" :
@@ -50,6 +48,7 @@ function updateLocalDocument(newContent, localDocument) {
                 break;
             case "I" : {
                 public_insertAfter(localDocument, i[1], i[2]);
+                localDocument.ind_to_pos = _getPositionByIndex(localDocument).slice();
                 break;
             }
             case "D" : {
@@ -58,6 +57,7 @@ function updateLocalDocument(newContent, localDocument) {
             }
         }
     }
+    localDocument.ind_to_pos = _getPositionByIndex(localDocument).slice();
 }
 
 function assertEquals(left, right) {
@@ -95,6 +95,7 @@ function public_mergeStateWith(document, serializedState) {
     newState[1].forEach(function (x) {
         document.D2.add(x);
     });
+    document.ind_to_pos = _getPositionByIndex(document).slice();
 }
 
 function public_serializeState(document) {
@@ -113,13 +114,13 @@ function public_serializeState(document) {
 
 // Функция, которая моделирует добавление символа по индексу.
 function public_insertAfter(document, index, symbol) {
-    var z = _allocate(document, ind_to_pos[index + 1], ind_to_pos[index + 2]);
+    var z = _allocate(document, document.ind_to_pos[index + 1], document.ind_to_pos[index + 2]);
     _applyInsert(document, z, symbol);
 }
 
 // Функция, которая моделирует удаление символа по индексу.
 function public_remove(document, index) {
-    _applyRemove(document, ind_to_pos[index + 1]);
+    _applyRemove(document, document.ind_to_pos[index + 1]);
 }
 
 // Функция, которая моделирует замену символа по индексу.
@@ -146,6 +147,15 @@ function _getPositionByIndex(document) {
     }
     a.sort(cmp);
     return a;
+}
+
+function _getIndexByPosition(document, position) {
+    for (let i = 0; i < document.ind_to_pos.length; ++i) {
+        if (JSON.stringify(document.ind_to_pos[i]) === JSON.stringify(position)) {
+            return i;
+        }
+    }
+    return -1;
 }
 
 function cmp (a, b) {

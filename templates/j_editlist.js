@@ -83,9 +83,10 @@ function editList(left, right) {
             ans.push(res[cur[0]][cur[1]][1]);
         cur = res[cur[0]][cur[1]][0];
     }
-    ans.reverse();
+    ans.sort(cmp);
     return ans;
 }
 
 // !!!!! ^^^^^ ^^^^^ ^^^^^ ^^^^^ ^^^^^ ^^^^^ ^^^^^
 //------------------------------------------------
+
