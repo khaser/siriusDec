@@ -33,22 +33,29 @@
         <script src="/static/js/jquery-3.4.1.slim.min.js" integrity="sha384-J6qa4849blE2+poT4WnyKhv5vZF5SrPo0iEjwBvKU7imGFAV0wwj1yYfoRSJoZ+n" crossorigin="anonymous"></script>
         <script src="/static/js//popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
         <script src="/static/js/bootstrap.min.js" integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous"></script>
+        <script src="/static/js/lodash.min.js" crossorigin="anonymous"></script>
 
         <script src="/j/editlist" crossorigin="anonymous"></script>
         <script src="/j/treedoc" crossorigin="anonymous"></script>
 
         <script>
-        // Этот файл также использует код из
-        // - templates/j_editlist.js (четвертый шаг)
-        // - templates/j_treedoc.js (пятый шаг)
         var trash = "q€w®€™¥®¥™¥iuoihg§°£z×↓b©↓−«h»………»“i∞o→←∞&↑‰$³²²";
         var localDoc = public_newDocument();
         var ws = new WebSocket("ws://" + document.domain + ":" + location.port + "/ws");
-        $("#integration-textarea").on("input", function() {
+
+
+        var onInput = _.throttle(function() {
             var newContent = $("#integration-textarea").val();
             updateLocalDocument(newContent, localDoc);
             ws.send(public_serializeState(localDoc));
-        });
+        }, /* Вызывать не чаще, чем каждые */ 200 /* миллисекунд. */);
+
+
+
+        $("#integration-textarea").on("input", onInput);
+        $("#integration-textarea").on("blur", onInput.flush);
+
+
         ws.onmessage = function (event) {
             var startIndex = $("#integration-textarea").prop("selectionStart");
             var startPosition = localDoc.ind_to_pos[startIndex].slice();
@@ -75,35 +82,6 @@
         ws.onopen = function () {
             ws.send(trash);
         };
-
-        //------------------------------------------------
-        // !!!!! vvvvv vvvvv vvvvv vvvvv vvvvv vvvvv vvvvv
-        //
-        // TODO(sandello): Соберите воедино результаты работы с третьего шага и шестого шага.
-        //
-        // Вам нужно:
-        // - создать в JS модель документа;
-        // - наладить синхронизацию текстового поля с моделью;
-        //   - для этого необходимо добавить обработчик `$(...).on("input", function() { ... })`,
-        //     который будет вызываться при изменении содержимого поля;
-        //   - получить содержимое поле можно через `$(...).val()`;
-        // - (два пункта выше были сделаны в шестом шаге, но чуть по-другому скомпонованы);
-        // - наладить синхронизацию данных между браузерам;
-        //   - для этого необходимо установить соединение;
-        //   - после шага синхронизации поля с моделью необходимо отправить состояние другим браузерам;
-        //   - при получении состояния от другого браузера нужно обновить модель;
-        //   - и обновить текстовое поле: `$(...).val("Hello!")` установит содержимое поля в "Hello!";
-        // - (код общения через сервер можно взять с первого-третьего шагов);
-        // - (тесты на функции public_serializeState, public_mergeWithSerializedState есть в шестом шаге);
-        //
-        // Больше кода в данном файле нет.
-        //
-        // Попробуйте собрать итоговое решение самостоятельно.
-        //
-        // Удачи!
-        //
-        // !!!!! ^^^^^ ^^^^^ ^^^^^ ^^^^^ ^^^^^ ^^^^^ ^^^^^
-        //------------------------------------------------
         </script>
   </body>
 </html>
