@@ -176,7 +176,7 @@ function cmp (a, b) {
         return 1;
 }
 
-const magicK = 50;
+const magicK = 90;
 const levelSize = 100;
 const maxLevel = 200;
 // Реализовать функцию, аллоцирующую новую позицию между двумя границами.
