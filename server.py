@@ -38,13 +38,13 @@ async def handle_ws():
     async def sending():
         while True:
             data = await queue.get()
-            log.info("Пользователь %s: SEND[%r]", user, data)
+            log.info("Пользователь %s: SEND[%r symbols]", user, len(data))
             await quart.websocket.send(data)
 
     async def receiving():
         while True:
             data = await quart.websocket.receive()
-            log.info("Пользователь %s: RECV[%r]", user, data)
+            log.info("Пользователь %s: RECV[%r symbols]", user, len(data))
             for queue1 in queues:
                 await queue1.put(data)
 

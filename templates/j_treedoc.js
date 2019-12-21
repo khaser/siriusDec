@@ -33,6 +33,8 @@ function public_newDocument() {
     return {
         D1: new Map([[JSON.stringify([0]), "begin"], [JSON.stringify([100]), "end"]]),
         D2: new Set(),
+        deltaD1: new Map(),
+        deltaD2: new Set(),
         ind_to_pos: [[0], [100]]
     };
 }
@@ -101,12 +103,14 @@ function public_mergeStateWith(document, serializedState) {
 function public_serializeState(document) {
     var serializedD1 = [];
     var serializedD2 = [];
-    for (let x of document.D1) {
+    for (let x of document.deltaD1) {
         serializedD1.push([x[0], x[1]]);
     }
-    document.D2.forEach(function (x) {
+    document.deltaD2.forEach(function (x) {
         serializedD2.push(x);
     });
+    document.deltaD1.clear();
+    document.deltaD2.clear();
     return JSON.stringify([serializedD1, serializedD2]);
 }
 
@@ -275,11 +279,13 @@ function _applyInsert(document, position, symbol) {
     // нужно обновить D1, сохранив нужную пару
     var fix = JSON.stringify(position);
     document.D1.set(fix, symbol);
+    document.deltaD1.set(fix, symbol);
 }
 
 //ACCEPTED Применяем операцию удаления символа в позиции position.
 function _applyRemove(document, position) {
     // нужно обновить D2, сохранив удаленную позицию
-    var fix = JSON.stringify(position)
+    var fix = JSON.stringify(position);
     document.D2.add(fix);
+    document.deltaD2.add(fix);
 }
