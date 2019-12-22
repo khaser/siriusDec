@@ -37,6 +37,7 @@
         <script src="/static/js/bootstrap.min.js" integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous"></script>
 
         <script src="/j/treedoc" crossorigin="anonymous"></script>
+        <script src="/j/editlist" crossorigin="anonymous"></script>
 
         <script>
         // Основной код расположен в файле templates/j_treedoc.js.
@@ -49,122 +50,15 @@
         }
 
         [
-            function testNewDocumentDoesNotThrow() {
+            function testPositionSync1() {
                 let d = public_newDocument();
-            },
-            function testMakeEmptyDocument() {
-                let d = public_newDocument();
-                assertEquals(public_getContent(d), "");
-            },
-            function testInsertOneSymbol() {
-                let d = public_newDocument();
-                public_insertAfter(d, -1, "a");
-                assertEquals(public_getContent(d), "a");
-            },
-            function testInsertTwoSymbolsOneByOne() {
-                let d = public_newDocument();
-                public_insertAfter(d, -1, "a");
-                public_insertAfter(d,  0, "b");
-                assertEquals(public_getContent(d), "ab");
-            },
-            function testInsertTwoSymbolsInTheBeginning() {
-                let d = public_newDocument();
-                public_insertAfter(d, -1, "a");
-                public_insertAfter(d, -1, "b");
-                assertEquals(public_getContent(d), "ba");
-            },
-            function testInsertAndRemove() {
-                let d = public_newDocument();
-                public_insertAfter(d, -1, "a");
-                public_remove(d, 0);
-                assertEquals(public_getContent(d), "");
-            },
-            function testCatToCut() {
-                let d = public_newDocument();
-                public_insertAfter(d, -1, "c");
-                public_insertAfter(d,  0, "a");
-                public_insertAfter(d,  1, "t");
+                debugger;
+                updateLocalDocument("cat", d);
                 assertEquals(public_getContent(d), "cat");
-                public_replace(d, 1, "u");
-                assertEquals(public_getContent(d), "cut");
-            },
-            function testSerializingEmptyDocumentDoesNotThrow() {
-                let d1 = public_newDocument();
-                let s1 = public_serializeState(d1);
-            },
-            function testSerializingAndRestoringEmptyDocument() {
-                let d1 = public_newDocument();
-                let s1 = public_serializeState(d1);
-                public_mergeStateWith(d1, s1);
-                assertEquals(public_getContent(d1), "");
-            },
-            function testCopyCat() {
-                let d1 = public_newDocument();
-                assertEquals(public_getContent(d1), "");
-                public_insertAfter(d1, -1, "c");
-                public_insertAfter(d1,  0, "a");
-                public_insertAfter(d1,  1, "t");
-                assertEquals(public_getContent(d1), "cat");
-                let s1 = public_serializeState(d1);
-
-                let d2 = public_newDocument();
-                assertEquals(public_getContent(d2), "");
-                public_mergeStateWith(d2, s1);
-                assertEquals(public_getContent(d2), "cat");
-            },
-            function testSyncInsertions() {
-                let d1 = public_newDocument();
-                assertEquals(public_getContent(d1), "");
-                public_insertAfter(d1, -1, "a");
-                public_insertAfter(d1,  0, "b");
-                assertEquals(public_getContent(d1), "ab");
-                let s1 = public_serializeState(d1);
-
-                let d2 = public_newDocument();
-                assertEquals(public_getContent(d2), "");
-                public_mergeStateWith(d2, s1);
-                assertEquals(public_getContent(d2), "ab");
-
-                public_insertAfter(d1, 0, "c");
-                assertEquals(public_getContent(d1), "acb");
-
-                public_insertAfter(d2, 1, "d");
-                assertEquals(public_getContent(d2), "abd");
-
-                let s2 = public_serializeState(d1);
-                let s3 = public_serializeState(d2);
-                public_mergeStateWith(d1, s3);
-                public_mergeStateWith(d2, s2);
-
-                assertEquals(public_getContent(d1), "acbd");
-                assertEquals(public_getContent(d2), "acbd");
-            },
-            function testSyncDeletions() {
-                let d1 = public_newDocument();
-                assertEquals(public_getContent(d1), "");
-                public_insertAfter(d1, -1, "a");
-                public_insertAfter(d1,  0, "b");
-                assertEquals(public_getContent(d1), "ab");
-                let s1 = public_serializeState(d1);
-
-                let d2 = public_newDocument();
-                assertEquals(public_getContent(d2), "");
-                public_mergeStateWith(d2, s1);
-                assertEquals(public_getContent(d2), "ab");
-
-                public_remove(d1, 0);
-                assertEquals(public_getContent(d1), "b");
-
-                public_remove(d2, 1);
-                assertEquals(public_getContent(d2), "a");
-
-                let s2 = public_serializeState(d1);
-                let s3 = public_serializeState(d2);
-                public_mergeStateWith(d1, s3);
-                public_mergeStateWith(d2, s2);
-
-                assertEquals(public_getContent(d1), "");
-                assertEquals(public_getContent(d2), "");
+                console.log(d.ind_to_pos);
+                for (var i = 1; i <= 3; ++i) {
+                    assertEquals(i, _getIndexByPosition(d, d.ind_to_pos[i]));
+                }
             },
         ].forEach(function(testCase) {
             let name = testCase.name;

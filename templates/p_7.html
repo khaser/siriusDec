@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="stylesheet" href="/static/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+
+    <title>Сириус</title>
+
+    <style>
+        body {
+            padding-top: 5rem;
+        }
+    </style>
+</head>
+<body>
+<main role="main" class="container">
+    <div id="the-starter">
+        <h1>Привет, Сириус!</h1>
+        <p class="lead">Минималистичный коллаборативный текстовый редактор с синхронизацией в реальном времени.</p>
+    </div>
+    <div id="the-integration" class="container">
+        <div class="row">
+            <form class="col">
+                <div class="form-group">
+                    <textarea id="integration-textarea" class="form-control" rows="12"></textarea>
+                </div>
+            </form>
+        </div>
+    </div>
+</main>
+
+<script src="/static/js/jquery-3.4.1.slim.min.js" integrity="sha384-J6qa4849blE2+poT4WnyKhv5vZF5SrPo0iEjwBvKU7imGFAV0wwj1yYfoRSJoZ+n" crossorigin="anonymous"></script>
+<script src="/static/js//popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
+<script src="/static/js/bootstrap.min.js" integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous"></script>
+<script src="/static/js/lodash.min.js" crossorigin="anonymous"></script>
+
+<script src="/j/editlist" crossorigin="anonymous"></script>
+<script src="/j/treedoc" crossorigin="anonymous"></script>
+
+<script>
+    var trash = "q€w®€™¥®¥™¥iuoihg§°£z×↓b©↓−«h»………»“i∞o→←∞&↑‰$³²²";
+    var localDoc = public_newDocument();
+    var ws = new WebSocket("ws://" + document.domain + ":" + location.port + "/ws");
+
+
+    var onInput = _.throttle(function() {
+        var newContent = $("#integration-textarea").val();
+        updateLocalDocument(newContent, localDoc);
+        ws.send(public_serializeState(localDoc));
+    }, /* Вызывать не чаще, чем каждые */ 200 /* миллисекунд. */);
+
+
+
+    $("#integration-textarea").on("input", onInput);
+    $("#integration-textarea").on("blur", onInput.flush);
+
+
+    ws.onmessage = function (event) {
+        var startIndex = $("#integration-textarea").prop("selectionStart");
+        var startPosition = localDoc.ind_to_pos[startIndex].slice();
+
+        var endIndex = $("#integration-textarea").prop("selectionEnd");
+        var endPosition = localDoc.ind_to_pos[endIndex].slice();
+
+        var data = event.data;
+        if (data === trash) {
+            if (public_getContent(localDoc) !== "") {
+                ws.send(public_allSerializeState(localDoc));
+            }
+        } else {
+            var newContent = $("#integration-textarea").val();
+            updateLocalDocument(newContent, localDoc);
+            public_mergeStateWith(localDoc, data);
+            $("#integration-textarea").val(public_getContent(localDoc));
+        }
+        // далее код синхронизации
+        startIndex = _getIndexByPosition(localDoc, startPosition);
+        endIndex = _getIndexByPosition(localDoc, endPosition);
+        $("#integration-textarea").get()[0].setSelectionRange(startIndex, endIndex);
+    };
+    ws.onopen = function () {
+        ws.send(trash);
+    };
+</script>
+</body>
+</html>

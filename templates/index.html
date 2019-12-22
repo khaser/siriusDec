@@ -1,87 +1,131 @@
 <!doctype html>
 <html lang="ru">
-    <head>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-        <link rel="stylesheet" href="/static/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="stylesheet" href="/static/css/bootstrap.min.css"
+          integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
 
-        <title>Сириус</title>
+    <title>Сириус</title>
 
-        <style>
+    <style>
         body {
             padding-top: 5rem;
         }
-        </style>
-    </head>
-    <body>
-        <main role="main" class="container">
-            <div id="the-starter">
-                <h1>Привет, Сириус!</h1>
-                <p class="lead">Минималистичный коллаборативный текстовый редактор с синхронизацией в реальном времени.</p>
-            </div>
-            <div id="the-integration" class="container">
-                <div class="row">
-                    <form class="col">
-                        <div class="form-group">
-                            <textarea id="integration-textarea" class="form-control" rows="12"></textarea>
-                        </div>
-                    </form>
+    </style>
+</head>
+<body>
+<main role="main" class="container">
+    <div id="the-starter">
+        <h1>Привет, Сириус!</h1>
+        <p class="lead">Минималистичный коллаборативный текстовый редактор с синхронизацией в реальном времени.</p>
+    </div>
+    <div id="the-integration" class="container">
+        <div class="row">
+            <form class="col">
+                <div class="form-group">
+                    <textarea id="used-peer-id" class="form-control" rows="1"></textarea>
+                    <textarea id="another-peer-id" class="form-control" rows="1"></textarea>
+                    <button id="peer-connect"> connect</button>
+                    <textarea id="integration-textarea" class="form-control" rows="12"></textarea>
                 </div>
-            </div>
-        </main>
+            </form>
+        </div>
+    </div>
+</main>
 
-        <script src="/static/js/jquery-3.4.1.slim.min.js" integrity="sha384-J6qa4849blE2+poT4WnyKhv5vZF5SrPo0iEjwBvKU7imGFAV0wwj1yYfoRSJoZ+n" crossorigin="anonymous"></script>
-        <script src="/static/js//popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
-        <script src="/static/js/bootstrap.min.js" integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous"></script>
-        <script src="/static/js/lodash.min.js" crossorigin="anonymous"></script>
+<script src="/static/js/jquery-3.4.1.slim.min.js"
+        integrity="sha384-J6qa4849blE2+poT4WnyKhv5vZF5SrPo0iEjwBvKU7imGFAV0wwj1yYfoRSJoZ+n"
+        crossorigin="anonymous"></script>
+<script src="/static/js//popper.min.js"
+        integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
+        crossorigin="anonymous"></script>
+<script src="/static/js/bootstrap.min.js"
+        integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6"
+        crossorigin="anonymous"></script>
+<script src="/static/js/lodash.min.js" crossorigin="anonymous"></script>
+<script src="/static/js/peer.js"></script>
 
-        <script src="/j/editlist" crossorigin="anonymous"></script>
-        <script src="/j/treedoc" crossorigin="anonymous"></script>
+<script src="/j/editlist" crossorigin="anonymous"></script>
+<script src="/j/treedoc" crossorigin="anonymous"></script>
 
-        <script>
-        var trash = "q€w®€™¥®¥™¥iuoihg§°£z×↓b©↓−«h»………»“i∞o→←∞&↑‰$³²²";
-        var localDoc = public_newDocument();
-        var ws = new WebSocket("ws://" + document.domain + ":" + location.port + "/ws");
+<script>
+    var trash = "q€w®€™¥®¥™¥iuoihg§°£z×↓b©↓−«h»………»“i∞o→←∞&↑‰$³²²";
+    var localDoc = public_newDocument();
+    //var ws = new WebSocket("ws://" + document.domain + ":" + location.port + "/ws");
+    var peer = new Peer();
+    var conn;
+    // on open will be launch when you successfully connect to PeerServer
+
+    peer.on('open', function (id) {
+        console.log("peer id is", id);
+        $("#used-peer-id").val("Your peer id is " + id);
+    });
 
 
-        var onInput = _.throttle(function() {
+    $("#peer-connect").click(function (event) {
+        event.preventDefault();
+        content = document.getElementById("another-peer-id").value;
+        conn = peer.connect(content);
+        console.log("connected9999");
+        conn.on('open', function () {
+            conn.on('data', function (data) {
+                console.log('Received from in_conn:', data);
+                onData(data);
+            });
+            conn.send(trash);
+        });
+    });
+
+
+    peer.on('connection', function (out_conn) {
+        conn = out_conn;
+        console.log("connected5555");
+        conn.on('open', function () {
+            conn.on('data', function (data) {
+                console.log('Received from out_conn:', data);
+                onData(data);
+            });
+            conn.send(trash);
+        });
+    });
+
+    var onInput = _.throttle(function () {
+        var newContent = $("#integration-textarea").val();
+        updateLocalDocument(newContent, localDoc);
+        var msg = JSON.stringify(public_serializeState(localDoc));
+        console.log("sended ", msg);
+        conn.send(msg);
+    }, /* Вызывать не чаще, чем каждые */ 200 /* миллисекунд. */);
+
+    function onData(data) {
+        var startIndex = $("#integration-textarea").prop("selectionStart");
+        var startPosition = localDoc.ind_to_pos[startIndex].slice();
+
+        var endIndex = $("#integration-textarea").prop("selectionEnd");
+        var endPosition = localDoc.ind_to_pos[endIndex].slice();
+        if (data === trash) {
+            if (public_getContent(localDoc) !== "") {
+                var msg = JSON.stringify(public_allSerializeState(localDoc));
+                console.log("sended ", msg);
+                conn.send(msg);
+            }
+        } else {
+            data = JSON.parse(data);
             var newContent = $("#integration-textarea").val();
             updateLocalDocument(newContent, localDoc);
-            ws.send(public_serializeState(localDoc));
-        }, /* Вызывать не чаще, чем каждые */ 200 /* миллисекунд. */);
+            public_mergeStateWith(localDoc, data);
+            $("#integration-textarea").val(public_getContent(localDoc));
+        }
+        // далее код синхронизации
+        startIndex = _getIndexByPosition(localDoc, startPosition);
+        endIndex = _getIndexByPosition(localDoc, endPosition);
+        $("#integration-textarea").get()[0].setSelectionRange(startIndex, endIndex);
+    }
 
+    $("#integration-textarea").on("input", onInput);
+    $("#integration-textarea").on("blur", onInput.flush);
 
-
-        $("#integration-textarea").on("input", onInput);
-        $("#integration-textarea").on("blur", onInput.flush);
-
-
-        ws.onmessage = function (event) {
-            var startIndex = $("#integration-textarea").prop("selectionStart");
-            var startPosition = localDoc.ind_to_pos[startIndex].slice();
-
-            var endIndex = $("#integration-textarea").prop("selectionEnd");
-            var endPosition = localDoc.ind_to_pos[endIndex].slice();
-
-            var data = event.data;
-            if (data === trash) {
-                if (public_getContent(localDoc) !== "") {
-                    ws.send(public_allSerializeState(localDoc));
-                }
-            } else {
-                var newContent = $("#integration-textarea").val();
-                updateLocalDocument(newContent, localDoc);
-                public_mergeStateWith(localDoc, data);
-                $("#integration-textarea").val(public_getContent(localDoc));
-            }
-            // далее код синхронизации
-            startIndex = _getIndexByPosition(localDoc, startPosition);
-            endIndex = _getIndexByPosition(localDoc, endPosition);
-            $("#integration-textarea").get()[0].setSelectionRange(startIndex, endIndex);
-        };
-        ws.onopen = function () {
-            ws.send(trash);
-        };
-        </script>
-  </body>
+</script>
+</body>
 </html>
