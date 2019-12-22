@@ -24,10 +24,13 @@
         <div class="row">
             <form class="col">
                 <div class="form-group">
-                    <textarea id="used-peer-id" class="form-control" rows="1"></textarea>
+                    <h6 class="font-weight-light">Your peer id is</h6>
+                    <textarea id="used-peer-id" class="form-control" rows="1" disabled></textarea>
+                    <h6 class="font-weight-light">Enter room id</h6>
                     <textarea id="another-peer-id" class="form-control" rows="1"></textarea>
-                    <button id="peer-connect"> connect</button>
-                    <textarea id="integration-textarea" class="form-control" rows="12"></textarea>
+                    <br>
+                    <button id="peer-connect" class="btn btn-primary mb-2">Connect</button>
+                    <textarea id="integration-textarea" placeholder="Disconnected" class="form-control" rows="12"></textarea>
                 </div>
             </form>
         </div>
@@ -52,41 +55,54 @@
 <script>
     var trash = "q€w®€™¥®¥™¥iuoihg§°£z×↓b©↓−«h»………»“i∞o→←∞&↑‰$³²²";
     var localDoc = public_newDocument();
-    //var ws = new WebSocket("ws://" + document.domain + ":" + location.port + "/ws");
+    var ws = new WebSocket("ws://" + document.domain + ":" + location.port + "/ws");
     var peer = new Peer();
-    var conn;
-    // on open will be launch when you successfully connect to PeerServer
+    var conn = new Map();
 
-    peer.on('open', function (id) {
-        console.log("peer id is", id);
-        $("#used-peer-id").val("Your peer id is " + id);
-    });
+    function broadcastSend(data) {
+        console.log(conn);
+        for (let i of conn.values()) {
+            i.send(data);
+        }
+    }
+
+    ws.onopen = function () {
+        peer.on('open', function (id) {
+            $("#used-peer-id").val(id);
+            ws.send("peer " + id);
+            $("#peer-connect").click(function (event) {
+                event.preventDefault();
+                content = document.getElementById("another-peer-id").value;
+                ws.send(content);
+            });
+        });
+    };
 
 
-    $("#peer-connect").click(function (event) {
-        event.preventDefault();
-        content = document.getElementById("another-peer-id").value;
-        conn = peer.connect(content);
-        console.log("connected9999");
-        conn.on('open', function () {
-            conn.on('data', function (data) {
-                console.log('Received from in_conn:', data);
+    ws.onmessage = function (event) {
+        var new_conn = peer.connect(event.data);
+        conn.set(new_conn.peer, new_conn);
+        console.log("Connected with", event.data, "as Alice");
+        $("#integration-textarea").attr("placeholder", "Connected");
+        conn.get(new_conn.peer).on('open', function () {
+            conn.get(new_conn.peer).on('data', function (data) {
                 onData(data);
             });
-            conn.send(trash);
+            //conn.send(trash);
+            broadcastSend(trash);
         });
-    });
-
+    };
 
     peer.on('connection', function (out_conn) {
-        conn = out_conn;
-        console.log("connected5555");
-        conn.on('open', function () {
-            conn.on('data', function (data) {
-                console.log('Received from out_conn:', data);
+        conn.set(out_conn.peer, out_conn);
+        console.log("connected as Bob");
+        $("#integration-textarea").attr("placeholder", "Connected");
+        conn.get(out_conn.peer).on('open', function () {
+            conn.get(out_conn.peer).on('data', function (data) {
                 onData(data);
             });
-            conn.send(trash);
+            //conn.send(trash);
+            broadcastSend(trash);
         });
     });
 
@@ -94,9 +110,9 @@
         var newContent = $("#integration-textarea").val();
         updateLocalDocument(newContent, localDoc);
         var msg = JSON.stringify(public_serializeState(localDoc));
-        console.log("sended ", msg);
-        conn.send(msg);
-    }, /* Вызывать не чаще, чем каждые */ 200 /* миллисекунд. */);
+        //conn.send(msg);
+        broadcastSend(msg);
+    }, /* Вызывать не чаще, чем каждые */ 50 /* миллисекунд. */);
 
     function onData(data) {
         var startIndex = $("#integration-textarea").prop("selectionStart");
@@ -107,8 +123,8 @@
         if (data === trash) {
             if (public_getContent(localDoc) !== "") {
                 var msg = JSON.stringify(public_allSerializeState(localDoc));
-                console.log("sended ", msg);
-                conn.send(msg);
+                //conn.send(msg);
+                broadcastSend(msg);
             }
         } else {
             data = JSON.parse(data);

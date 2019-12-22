@@ -26,13 +26,13 @@ async def handle_p(name):
 async def handle_j(name):
     return await quart.render_template(f"j_{name}.js")
 
-queues = set()
+queues = dict()
+rooms = dict()
 
 @app.websocket("/ws")
 async def handle_ws():
-    global queues
-
-    user = f"{quart.websocket.remote_addr}#{random.randint(1000, 9999)}"
+    global queues, rooms
+    user = "Undefined user"
     queue = asyncio.Queue()
 
     async def sending():
@@ -41,22 +41,31 @@ async def handle_ws():
             log.info("Пользователь %s: SEND[%r symbols]", user, len(data))
             await quart.websocket.send(data)
 
+
     async def receiving():
         while True:
             data = await quart.websocket.receive()
+            if (data[0:4] == "peer"):
+                user = data[5:];
+                queues[user] = queue;
+                continue;
+            
+            if (rooms.get(data, 0) == 0):
+                rooms[data] = [user];
+            else:
+                for cur in rooms[data]:
+                    await queues[user].put(cur);
+                rooms[data].append(user);
             log.info("Пользователь %s: RECV[%r symbols]", user, len(data))
-            for queue1 in queues:
-                await queue1.put(data)
 
     try:
         log.info("Пользователь %s подключился :)", user)
-        queues.add(queue)
         producer = asyncio.create_task(sending())
         consumer = asyncio.create_task(receiving())
         await asyncio.gather(producer, consumer)
     finally:
         log.info("Пользователь %s отключился :(", user)
-        queues.remove(queue)
+        queues[user] = asyncio.Queue();
 
 
 def main():
