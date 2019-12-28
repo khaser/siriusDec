@@ -1,2 +1,2 @@
 # siriusDec
-Онлайн peer to peer редактор теста с возможностью работы несколькими пользователями с одним документом одновременно.
+Realtime online peer to peer text editor.
