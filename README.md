@@ -1,2 +1,2 @@
 # siriusDec
-Realtime online peer to peer text editor.
+Realtime online peer to peer text editor
